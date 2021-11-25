@@ -175,7 +175,6 @@ def main(args):
         torch.cuda.empty_cache()
         if args.distributed:
             sampler_train.set_epoch(epoch)
-        print('666666666666666666666666')
         train_stats = train_one_epoch(
             model, criterion, data_loader_train, optimizer, device, epoch,
             args.clip_max_norm)
@@ -193,8 +192,6 @@ def main(args):
                     'epoch': epoch,
                     'args': args,
                 }, checkpoint_path)
-        print('7777777777777777777777')
-
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
