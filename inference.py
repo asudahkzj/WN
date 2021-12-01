@@ -77,9 +77,7 @@ def get_args_parser():
     parser.add_argument('--pre_norm', action='store_true')
 
     # * Segmentation
-    # parser.add_argument('--masks', action='store_true',
-    #                     help="Train segmentation head if the flag is provided")
-    parser.add_argument('--masks', action='store_false',
+    parser.add_argument('--masks', action='store_true',
                         help="Train segmentation head if the flag is provided")
 
     # Loss
@@ -180,7 +178,6 @@ def main(args):
         for i in range(vis_num):
             print("Process video: ",i)
             id_ = videos[i]['id']
-            # length = videos[i]['length']
             file_names = videos[i]['file_names']
             length = len(file_names)
             clip_num = math.ceil(length/num_frames)
@@ -203,7 +200,6 @@ def main(args):
             name = file_names[0].split('/')[0]
             for k, v in expressions[name]['expressions'].items():
                 a_name = name + '_' + k + '.npy'
-                # audio = np.load(os.path.join('data/audio_feature', a_name))
                 audio = np.load(os.path.join('./VisTR/data/audio_feature', a_name))
                 audio = audio.transpose()     
                 audio = torch.as_tensor(audio, dtype=torch.float32).unsqueeze(0)
@@ -211,41 +207,17 @@ def main(args):
                 img=torch.cat(img_set,0)
                 obj_id = v['obj_id']
 
-                # exp = v['exp']
-                # exp = tokenizer.encode(exp)
-                # exp = torch.from_numpy(np.stack([exp]))
-                # exp = exp.to(device)
-                # outputs = model(img, exp)
-
                 # inference time is calculated for this operation
                 outputs = model(img, audio)
-                # total_time += time
-                # end of model inference
-                # logits, boxes, masks = outputs['pred_logits'].softmax(-1)[0,:,:-1], outputs['pred_boxes'][0], outputs['pred_masks'][0]
                 boxes, masks = outputs['pred_boxes'][0], outputs['pred_masks'][0]
                 pred_masks =F.interpolate(masks.reshape(num_frames,num_ins,masks.shape[-2],masks.shape[-1]),(im.size[1],im.size[0]),mode="bilinear").sigmoid().cpu().detach().numpy()>0.5
-                # pred_logits = logits.reshape(num_frames,num_ins,logits.shape[-1]).cpu().detach().numpy()
                 pred_masks = pred_masks[:length] 
-                # pred_logits = pred_logits[:length]
-                # pred_scores = np.max(pred_logits,axis=-1)
-                # pred_logits = np.argmax(pred_logits,axis=-1)
                 for m in range(num_ins):
                     if pred_masks[:,m].max()==0:
                         continue
-                    # score = pred_scores[:,m].mean()
-                    #category_id = pred_logits[:,m][pred_scores[:,m].argmax()]
-                    # category_id = np.argmax(np.bincount(pred_logits[:,m]))
-                    # instance = {'video_id':id_, 'score':float(score), 'category_id':int(category_id), 'obj_id':int(obj_id), 'file_name':name}
                     instance = {'video_id':id_, 'obj_id':int(obj_id), 'file_name':name}
                     segmentation = []
                     for n in range(length):
-                        # if pred_scores[n,m]<0.001:
-                        #     segmentation.append(None)
-                        # else:
-                        #     mask = (pred_masks[n,m]).astype(np.uint8) 
-                        #     rle = mask_util.encode(np.array(mask[:,:,np.newaxis], order='F'))[0]
-                        #     rle["counts"] = rle["counts"].decode("utf-8")
-                        #     segmentation.append(rle)
                         mask = (pred_masks[n,m]).astype(np.uint8) 
                         rle = mask_util.encode(np.array(mask[:,:,np.newaxis], order='F'))[0]
                         rle["counts"] = rle["counts"].decode("utf-8")
