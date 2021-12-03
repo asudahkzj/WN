@@ -269,26 +269,8 @@ def get_sha():
 def collate_fn(batch):
     batch = list(zip(*batch))
     batch[0] = nested_tensor_from_tensor_list(batch[0])
-
     exp = nested_tensor_from_exp(batch[1])
-
-    # a = exp.tensors[0] == batch[1][0]
-    # a = (exp.tensors[0] == batch[1][0]).all()
-    # exp_list = [] 
-    # for e in batch[1]:
-    #     exp_list.append(e)
-    # exp = torch.from_numpy(np.stack(exp_list))
-    # exp = torch.as_tensor(np.stack(exp_list), dtype=torch.float32)
-    # batch[1] = batch[1][0].unsqueeze(0)
-    
     batch[1] = exp
-
-    # result_list = []
-    # for i in range(len(batch[1][0])):
-    #     exp = torch.from_numpy(batch[1][0][i]).unsqueeze(0)
-    #     result_list.append(tuple([batch[0], exp, (batch[2][0][i],)]))
-
-    # return result_list
     return tuple(batch)
 
 
