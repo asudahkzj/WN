@@ -12,7 +12,7 @@ from pytorch_wavelets import DWTForward, DWTInverse
 
 class MultTransformerEncoder(nn.Module):
     """
-    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
+    Transformer encoder consisting of *args.enc_layers* layers. Each layer
     is a :class:`TransformerEncoderLayer`.
     Args:
         embed_tokens (torch.nn.Embedding): input embedding
@@ -177,7 +177,7 @@ class MultTransformerEncoderLayer(nn.Module):
                 w_abs = wh_list[j][i].abs()
                 ts = (0.006 * (w_abs.max())).data
                 dwt_mask = (w_abs < ts)
-                num = dwt_mask.sum()
+                # num = dwt_mask.sum()
                 w_abs = w_abs - ts
                 w_abs = w_abs.masked_fill(dwt_mask, 0)
                 wh_list[j][i] = w_abs.mul(dwt_sign)

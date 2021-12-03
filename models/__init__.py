@@ -1,4 +1,4 @@
-from .vistr import build
+from .wnet import build
 
 
 def build_model(args):

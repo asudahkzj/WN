@@ -118,7 +118,7 @@ class MultiheadAttention(nn.Module):
                 print(attn_mask.unsqueeze(0).shape)
                 assert False
 
-        # 添加mask
+        # add mask
         # # exp_mask_list = [exp_mask[i].repeat(attn_weights.shape[1], 1) for i in range(exp_mask.shape[0])]
         # # exp_mask = torch.stack(exp_mask_list)
         # # exp_mask = exp_mask.repeat(self.num_heads*bsz, int(attn_weights.shape[1]/bsz), 1)
@@ -134,7 +134,7 @@ class MultiheadAttention(nn.Module):
         attn = torch.bmm(attn_weights, v)
         assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]
 
-        # 添加mask
+        # add mask
         # mask = mask.repeat(self.num_heads*bsz, int(attn.shape[2]/bsz), 1)
         # mask = mask.transpose(1, 2)
         # q_mask = torch.vstack([m.repeat(self.num_heads, attn.shape[2], 1) for m in mask])

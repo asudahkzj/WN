@@ -59,16 +59,16 @@ class BasicBlock(nn.Module):
 
 
 
-class VisTRsegm(nn.Module):
-    def __init__(self, vistr, freeze_vistr=False):
+class Wnetsegm(nn.Module):
+    def __init__(self, wnet, freeze_vistr=False):
         super().__init__()
-        self.vistr = vistr
+        self.wnet = wnet
 
         if freeze_vistr:
             for p in self.parameters():
                 p.requires_grad_(False)
 
-        hidden_dim, nheads = vistr.transformer.d_model, vistr.transformer.nhead
+        hidden_dim, nheads = wnet.transformer.d_model, wnet.transformer.nhead
         self.bbox_attention = MHAttentionMap(hidden_dim, hidden_dim, nheads, dropout=0.0)
         self.mask_head = MaskHeadSmallConv(hidden_dim + nheads, [1024, 512, 256], hidden_dim)
         self.insmask_head = nn.Sequential(
@@ -82,42 +82,41 @@ class VisTRsegm(nn.Module):
                                 nn.GroupNorm(4,12),
                                 nn.ReLU(),
                                 nn.Conv3d(12,1,1))
-    def forward(self, samples: NestedTensor, expressions):
+    def forward(self, samples: NestedTensor, expressions: NestedTensor):
         if not isinstance(samples, NestedTensor):
             samples = nested_tensor_from_tensor_list(samples)
         if not isinstance(expressions, NestedTensor):
             expressions = nested_tensor_from_exp(expressions)
-        features, pos = self.vistr.backbone(samples)
+        features, pos = self.wnet.backbone(samples)
         bs = features[-1].tensors.shape[0]
         src, mask = features[-1].decompose()  # src:36*2048*10*15   mask:36*10*15
         assert mask is not None
-        src_proj = self.vistr.input_proj(src) # 36*384*10*15
+        src_proj = self.wnet.input_proj(src) # 36*384*10*15
         n,c,s_h,s_w = src_proj.shape
-        bs_f = bs//self.vistr.num_frames
-        src_proj = src_proj.reshape(bs_f, self.vistr.num_frames,c, s_h, s_w).permute(0,2,1,3,4).flatten(-2)  # 1*384*36*150
-        mask = mask.reshape(bs_f, self.vistr.num_frames, s_h*s_w)  # 1*36*150
+        bs_f = bs//self.wnet.num_frames
+        src_proj = src_proj.reshape(bs_f, self.wnet.num_frames,c, s_h, s_w).permute(0,2,1,3,4).flatten(-2)  # 1*384*36*150
+        mask = mask.reshape(bs_f, self.wnet.num_frames, s_h*s_w)  # 1*36*150
         pos = pos[-1].permute(0,2,1,3,4).flatten(-2)  # 1*384*36*150  bs*c*l*dim
 
         exp_tensor, exp_mask = expressions.decompose()
+        exp = self.wnet.proj_a(exp_tensor)  # 1*384*l
 
-        exp = self.vistr.proj_a(exp_tensor)  # 1*384*l
+        hs, memory, fusion = self.wnet.transformer(src_proj, mask, exp, self.wnet.query_embed.weight, pos, exp_mask)
 
-        hs, memory, fusion = self.vistr.transformer(src_proj, mask, exp, self.vistr.query_embed.weight, pos, exp_mask)
-
-        outputs_coord = self.vistr.bbox_embed(hs).sigmoid()
+        outputs_coord = self.wnet.bbox_embed(hs).sigmoid()
         out = {"pred_boxes": outputs_coord[-1]}
         out['memory'] = fusion[0]  # 3600*1*384
         out['fusion'] = fusion[1]
-        if self.vistr.aux_loss:
+        if self.wnet.aux_loss:
             out['aux_outputs'] = [{'pred_boxes': a} for a in outputs_coord[:-1]]
         for i in range(3):
             _,c_f,h,w = features[i].tensors.shape
-            features[i].tensors = features[i].tensors.reshape(bs_f, self.vistr.num_frames, c_f, h,w)
-        n_f = self.vistr.num_queries//self.vistr.num_frames
+            features[i].tensors = features[i].tensors.reshape(bs_f, self.wnet.num_frames, c_f, h,w)
+        n_f = self.wnet.num_queries//self.wnet.num_frames
         outputs_seg_masks = []
         
         # image level processing using box attention
-        for i in range(self.vistr.num_frames):
+        for i in range(self.wnet.num_frames):
             hs_f = hs[-1][:,i*n_f:(i+1)*n_f,:]
             memory_f = memory[:,:,i,:].reshape(bs_f, c, s_h,s_w)
             mask_f = mask[:,i,:].reshape(bs_f, s_h,s_w)

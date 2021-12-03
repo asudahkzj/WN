@@ -1,5 +1,5 @@
 """
-VisTR Transformer class.
+Wnet Transformer class.
 
 Copy-paste from torch.nn.Transformer with modifications:
     * positional encodings are passed in MHattention
@@ -32,7 +32,6 @@ class Transformer(nn.Module):
                                               relu_dropout=dropout, 
                                               res_dropout=dropout, 
                                               embed_dropout=0.25, 
-                                            #   embed_dropout=0,
                                               attn_mask=True)
 
         decoder_layer = TransformerDecoderLayer(d_model, nhead, dim_feedforward,
