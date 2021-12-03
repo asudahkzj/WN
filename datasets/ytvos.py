@@ -17,11 +17,10 @@ import cv2
 import random
 
 import json
-from .tokenizer import Tokenizer
 import numpy as np
 
 class YTVOSDataset:
-    def __init__(self, img_folder, mask_folder, ann_file, exp_file, vocab_path, transforms, return_masks, num_frames):
+    def __init__(self, img_folder, mask_folder, ann_file, exp_file, transforms, return_masks, num_frames):
         self.img_folder = img_folder
         self.mask_folder = mask_folder
         self.ann_file = ann_file
@@ -36,7 +35,6 @@ class YTVOSDataset:
         self.vid_ids = self.ytvos.getVidIds()  # 1~2238
         self.vid_infos = []
         self.exp_infos = load_expressions(exp_file)  # 表达
-        self.tokenizer = Tokenizer(vocab_path)  # 词表
         for i in self.vid_ids:
             info = self.ytvos.loadVids([i])[0]
             info['filenames'] = info['file_names']
@@ -75,8 +73,8 @@ class YTVOSDataset:
             img.append(Image.open(img_path).convert('RGB'))
 
         ann_ids = self.ytvos.getAnnIds(vidIds=[vid_id])
-        if obj_id > len(ann_ids):
-            print('--------------------------', filename, obj_id)
+        # if obj_id > len(ann_ids):
+        #     print('--------------------------', filename, obj_id)
         ann_ids = [ann_ids[obj_id-1]]
 
         target = self.ytvos.loadAnns(ann_ids)
@@ -227,9 +225,9 @@ def build(image_set, args):
  #       "val": (root / "valid/JPEGImages", root / "annotations" / f'{mode}_val_sub.json'),
  #   }
     PATHS = {
-        "train": (root / "train/JPEGImages", root / "train/Annotations", root /  f'ann/{mode}_train_sub.json', root / "meta_expressions/train/meta_expressions.json", root / "vocab"),
+        "train": (root / "train/JPEGImages", root / "train/Annotations", root /  f'ann/{mode}_train_sub.json', root / "meta_expressions/train/meta_expressions.json"),
         "val": (root / "valid/JPEGImages", root /  f'ann/{mode}_valid_sub.json'),
     }
-    img_folder, mask_folder, ann_file, exp_file, vocab_path = PATHS[image_set]
-    dataset = YTVOSDataset(img_folder, mask_folder, ann_file, exp_file, vocab_path, transforms=make_coco_transforms(image_set), return_masks=args.masks, num_frames = args.num_frames)
+    img_folder, mask_folder, ann_file, exp_file = PATHS[image_set]
+    dataset = YTVOSDataset(img_folder, mask_folder, ann_file, exp_file, transforms=make_coco_transforms(image_set), return_masks=args.masks, num_frames = args.num_frames)
     return dataset
