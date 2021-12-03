@@ -23,22 +23,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 10
-    count = 0
-    # for data in data_loader:
-        # print(len(data))
-        # if len(data) == 0:
-        #     print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-            # print(data)
     for samples, expressions, targets in metric_logger.log_every(data_loader, print_freq, header):
-    # for data in metric_logger.log_every(data_loader, print_freq, header):
-        # count += 1
-        # if count == 25:
-        #     break
-        # for i in range(7):
-            # if i > len(data)-1:
-            #     break
-            # print(count,i,len(data))
-        # samples, expressions, targets = data[i%len(data)]
         samples = samples.to(device)
         expressions = expressions.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
@@ -76,9 +61,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
     # gather the stats from all processes
-    print('11111111111111')
     metric_logger.synchronize_between_processes()
-    print('22222222222222')
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 

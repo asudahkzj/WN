@@ -1,5 +1,5 @@
 """
-Training script of VisTR
+Training script of Wnet
 Modified from DETR (https://github.com/facebookresearch/detr)
 """
 import argparse
@@ -74,13 +74,14 @@ def get_args_parser():
     parser.add_argument('--dice_loss_coef', default=1, type=float)
     parser.add_argument('--bbox_loss_coef', default=5, type=float)
     parser.add_argument('--giou_loss_coef', default=2, type=float)
+    parser.add_argument('--kl_loss_coef', default=500, type=float)
 
     # dataset parameters
     parser.add_argument('--dataset_file', default='ytvos')
     parser.add_argument('--ytvos_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='fft_pos_kl_4layers_dwt0006_soft_kl1000',
+    parser.add_argument('--output_dir', default='output',
                         help='path where to save, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
@@ -149,7 +150,6 @@ def main(args):
     
     # load coco pretrained weight
     checkpoint = torch.load(args.pretrained_weights, map_location='cpu')['model']
-    # state_dict = torch.load('fft_pos_kl_4layers/checkpoint0000.pth')['model']
     del checkpoint["vistr.class_embed.weight"]
     del checkpoint["vistr.class_embed.bias"]
     del checkpoint["vistr.query_embed.weight"]
@@ -199,7 +199,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('VisTR training and evaluation script', parents=[get_args_parser()])
+    parser = argparse.ArgumentParser('Wnet training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
