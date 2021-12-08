@@ -27,9 +27,6 @@ from scipy.optimize import linear_sum_assignment
 import pycocotools.mask as mask_util
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
-
-
 def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
     parser.add_argument('--lr', default=1e-4, type=float)
@@ -42,7 +39,7 @@ def get_args_parser():
                         help='gradient clipping max norm')
 
     # Model parameters
-    parser.add_argument('--model_path', type=str, default='output/checkpoint0000.pth',
+    parser.add_argument('--model_path', type=str, default='output/checkpoint.pth',
                         help="Path to the model weights.")
     # * Backbone
     parser.add_argument('--backbone', default='resnet50', type=str,
@@ -74,7 +71,7 @@ def get_args_parser():
     parser.add_argument('--pre_norm', action='store_true')
 
     # * Segmentation
-    parser.add_argument('--masks', action='store_false',
+    parser.add_argument('--masks', action='store_true',
                         help="Train segmentation head if the flag is provided")
 
     # Loss
@@ -91,7 +88,7 @@ def get_args_parser():
     # dataset parameters
     parser.add_argument('--img_path', default='data/rvos/train/JPEGImages/')
     parser.add_argument('--ann_path', default='data/rvos/ann/instances_test_sub.json')
-    parser.add_argument('--save_path', default='results/result3.json')
+    parser.add_argument('--save_path', default='result.json')
     parser.add_argument('--dataset_file', default='ytvos')
     parser.add_argument('--coco_path', type=str)
     parser.add_argument('--coco_panoptic_path', type=str)
