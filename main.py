@@ -150,9 +150,9 @@ def main(args):
     
     # load coco pretrained weight
     checkpoint = torch.load(args.pretrained_weights, map_location='cpu')['model']
-    del checkpoint["vistr.class_embed.weight"]
-    del checkpoint["vistr.class_embed.bias"]
-    del checkpoint["vistr.query_embed.weight"]
+    del checkpoint["wnet.class_embed.weight"]
+    del checkpoint["wnet.class_embed.bias"]
+    del checkpoint["wnet.query_embed.weight"]
     model.module.load_state_dict(checkpoint,strict=False)
 
     if args.resume:

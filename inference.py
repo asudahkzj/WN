@@ -1,12 +1,10 @@
 '''
-Inference code for VisTR
+Inference code for Wnet
 Modified from DETR (https://github.com/facebookresearch/detr)
 '''
 import argparse
-import datetime
 import json
 import random
-import time
 from pathlib import Path
 
 import numpy as np
@@ -28,9 +26,8 @@ import json
 from scipy.optimize import linear_sum_assignment
 import pycocotools.mask as mask_util
 
-from datasets.tokenizer import Tokenizer
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 
 def get_args_parser():
@@ -45,7 +42,7 @@ def get_args_parser():
                         help='gradient clipping max norm')
 
     # Model parameters
-    parser.add_argument('--model_path', type=str, default='./VisTR/fft_pos_kl_4layers_dwt0006_soft_kl1000/checkpoint0000.pth',
+    parser.add_argument('--model_path', type=str, default='output/checkpoint0000.pth',
                         help="Path to the model weights.")
     # * Backbone
     parser.add_argument('--backbone', default='resnet50', type=str,
@@ -77,7 +74,7 @@ def get_args_parser():
     parser.add_argument('--pre_norm', action='store_true')
 
     # * Segmentation
-    parser.add_argument('--masks', action='store_true',
+    parser.add_argument('--masks', action='store_false',
                         help="Train segmentation head if the flag is provided")
 
     # Loss
@@ -89,13 +86,12 @@ def get_args_parser():
     parser.add_argument('--dice_loss_coef', default=1, type=float)
     parser.add_argument('--bbox_loss_coef', default=5, type=float)
     parser.add_argument('--giou_loss_coef', default=2, type=float)
-    parser.add_argument('--eos_coef', default=0.1, type=float,
-                        help="Relative classification weight of the no-object class")
+    parser.add_argument('--kl_loss_coef', default=500, type=float)
 
     # dataset parameters
-    parser.add_argument('--img_path', default='./VisTR/data/rvos/train/JPEGImages/')
-    parser.add_argument('--ann_path', default='./VisTR/data/rvos/ann/instances_test_sub.json')
-    parser.add_argument('--save_path', default='./VisTR/results/results_fft_kl_4l_dwt0006_soft_kl1000_0000.json')
+    parser.add_argument('--img_path', default='data/rvos/train/JPEGImages/')
+    parser.add_argument('--ann_path', default='data/rvos/ann/instances_test_sub.json')
+    parser.add_argument('--save_path', default='results/result3.json')
     parser.add_argument('--dataset_file', default='ytvos')
     parser.add_argument('--coco_path', type=str)
     parser.add_argument('--coco_panoptic_path', type=str)
@@ -172,9 +168,8 @@ def main(args):
         folder = args.img_path
         videos = json.load(open(args.ann_path,'rb'))['videos']
         vis_num = len(videos)
-        expressions = json.load(open('./VisTR/data/rvos/meta_expressions/train/meta_expressions.json', 'r'))['videos']
+        expressions = json.load(open('data/rvos/meta_expressions/train/meta_expressions.json', 'r'))['videos']
         result = [] 
-        total_time = 0
         for i in range(vis_num):
             print("Process video: ",i)
             id_ = videos[i]['id']
@@ -200,7 +195,7 @@ def main(args):
             name = file_names[0].split('/')[0]
             for k, v in expressions[name]['expressions'].items():
                 a_name = name + '_' + k + '.npy'
-                audio = np.load(os.path.join('./VisTR/data/audio_feature', a_name))
+                audio = np.load(os.path.join('data/audio_feature', a_name))
                 audio = audio.transpose()     
                 audio = torch.as_tensor(audio, dtype=torch.float32).unsqueeze(0)
                 audio = audio.to(device)
@@ -224,15 +219,12 @@ def main(args):
                         segmentation.append(rle)
                     instance['segmentations'] = segmentation
                     result.append(instance)
-        print('total_time:', total_time)
     with open(args.save_path, 'w', encoding='utf-8') as f:
         json.dump(result,f)
                     
-        
-
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('VisTR inference script', parents=[get_args_parser()])
+    parser = argparse.ArgumentParser('Wnet inference script', parents=[get_args_parser()])
     args = parser.parse_args()
     main(args)
