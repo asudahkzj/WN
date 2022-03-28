@@ -32,10 +32,10 @@ def get_args_parser():
                         help='gradient clipping max norm')
 
     # Model parameters
-    parser.add_argument('--pretrained_weights', type=str, default="r101_pretrained.pth",
+    parser.add_argument('--pretrained_weights', type=str, default="coco_pretrained_weights/384_coco_r50.pth",
                         help="Path to the pretrained model.")
     # * Backbone
-    parser.add_argument('--backbone', default='resnet101', type=str,
+    parser.add_argument('--backbone', default='resnet50', type=str,
                         help="Name of the convolutional backbone to use")
     parser.add_argument('--dilation', action='store_true',
                         help="If true, we replace stride with dilation in the last convolutional block (DC5)")
